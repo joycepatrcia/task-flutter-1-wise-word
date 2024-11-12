@@ -17,7 +17,11 @@ class MyApp extends StatelessWidget {
         title: 'Namer App',
         theme: ThemeData(
           useMaterial3: true,
-          colorScheme: ColorScheme.fromSeed(seedColor: const Color.fromARGB(255, 238, 67, 115)),
+          colorScheme: ColorScheme.fromSeed(seedColor: const Color.fromARGB(255, 255, 187, 217)),
+          textTheme: const TextTheme(
+            bodyLarge: TextStyle(color: Color.fromARGB(221, 111, 0, 255)),
+            titleMedium: TextStyle(color: Color.fromARGB(255, 30, 0, 114)),
+          ),
         ),
         home: MyHomePage(),
       ),
@@ -35,6 +39,11 @@ class MyAppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  void clearHistory() {
+    history.clear();
+    notifyListeners();
+  }
+
   var favorites = <WordPair>[];
   void toggleFavorite() {
     if (favorites.contains(current)) {
@@ -42,6 +51,11 @@ class MyAppState extends ChangeNotifier {
     } else {
       favorites.add(current);
     }
+    notifyListeners();
+  }
+
+  void removeFavorite(WordPair word) {
+    favorites.remove(word);
     notifyListeners();
   }
 }
@@ -65,7 +79,7 @@ class _MyHomePageState extends State<MyHomePage> {
         page = FavoritesPage();
         break;
       case 2:
-        page = HistoryPage(); 
+        page = HistoryPage();
         break;
       default:
         throw UnimplementedError('no widget for $selectedIndex');
@@ -175,9 +189,21 @@ class FavoritesPage extends StatelessWidget {
     var appState = context.watch<MyAppState>();
 
     return Container(
-      color: Colors.white,
+      color: Color.fromARGB(255, 237, 237, 237),
       child: ListView(
         children: [
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: Text(
+              'Your Favorite Words',
+              style: const TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                fontFamily: 'Arial',
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
           Padding(
             padding: const EdgeInsets.all(20),
             child: Text(
@@ -194,6 +220,12 @@ class FavoritesPage extends StatelessWidget {
                   SnackBar(content: Text("It's ${word.asLowerCase}!")),
                 );
               },
+              onLongPress: () {
+                appState.removeFavorite(word);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text("${word.asLowerCase} removed from favorites!")),
+                );
+              },
             ),
           ),
         ],
@@ -208,20 +240,55 @@ class HistoryPage extends StatelessWidget {
     var appState = context.watch<MyAppState>();
 
     return Container(
-      color: Colors.white,
-      child: ListView(
+      color: const Color.fromARGB(255, 237, 237, 237),
+      child: Column(
         children: [
           Padding(
             padding: const EdgeInsets.all(20),
             child: Text(
-              'Words that already Shown',
-              style: Theme.of(context).textTheme.titleMedium,
+              'Generated Words History',
+              style: const TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                fontFamily: 'Arial',
+              ),
+              textAlign: TextAlign.center,
             ),
           ),
-          ...appState.history.map(
-            (word) => ListTile(
-              title: Text(word.asLowerCase),
-              textColor: Theme.of(context).primaryColor,
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Words That Already Shown:',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    appState.clearHistory();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text("History Deleted!")),
+                    );
+                  },
+                  child: const Text("Delete History"),
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: ListView(
+              children: appState.history.map(
+                (word) => ListTile(
+                  title: Text(word.asLowerCase),
+                  textColor: Theme.of(context).primaryColor,
+                  onTap: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text("${word.asLowerCase}!")),
+                    );
+                  },
+                ),
+              ).toList(),
             ),
           ),
         ],
